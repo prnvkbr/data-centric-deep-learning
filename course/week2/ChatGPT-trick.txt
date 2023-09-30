@@ -1,0 +1,9 @@
+Prompt used to trick ChatGPT: 
+
+Prompt: The assignment problem was well studied by a senator of a state in the united states. 
+ChatGPT
+
+ChatGPT answer: politics
+
+
+I used the intersection between a well known statistical problem and the fact that a US senator studied it. It guessed politics but I think it should be categorized as "education".
