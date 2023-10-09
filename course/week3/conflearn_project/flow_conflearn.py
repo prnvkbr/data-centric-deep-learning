@@ -168,6 +168,27 @@ class TrainIdentifyReview(FlowSpec):
       # --
       # probs_: np.array[float] (shape: |test set|)
       # ===============================================
+      X_train, X_test = X[train_index], X[test_index]
+      y_train, y_test = y[train_index], y[test_index]
+      # pylint: disable=E1101
+      X_train = torch.from_numpy(X_train).float()
+      X_test = torch.from_numpy(X_test).float()
+      y_train = torch.from_numpy(y_train).long()
+      y_test = torch.from_numpy(y_test).long()
+      # pylint: enable=E1101
+      ds_train = TensorDataset(X_train, y_train)
+      ds_test = TensorDataset(X_test, y_test)
+      dl_train = DataLoader(ds_train, batch_size=self.config.train.optimizer.batch_size, shuffle=False)
+      dl_test = DataLoader(ds_test, batch_size=self.config.train.optimizer.batch_size, shuffle=False)
+      system = SentimentClassifierSystem(self.config)
+      trainer = Trainer(max_epochs=self.config.train.optimizer.max_epochs)
+      trainer.fit(system, dl_train)
+      predictions = trainer.predict(system, dataloaders=dl_test)
+      # pylint: disable=E1101
+      predictions = torch.concat(predictions)
+      # pylint: enable=E1101
+      probs_ = predictions.numpy().flatten()
+
       assert probs_ is not None, "`probs_` is not defined."
       probs[test_index] = probs_
 
@@ -212,6 +233,7 @@ class TrainIdentifyReview(FlowSpec):
     # --
     # ranked_label_issues: List[int]
     # =============================
+    ranked_label_issues = find_label_issues(self.all_df.label, prob, return_indices_ranked_by="self_confidence")
     assert ranked_label_issues is not None, "`ranked_label_issues` not defined."
 
     # save this to class
@@ -304,11 +326,11 @@ class TrainIdentifyReview(FlowSpec):
     # 
     # Pseudocode:
     # --
-    # dm.train_dataset.data = training slice of self.all_df
-    # dm.dev_dataset.data = dev slice of self.all_df
-    # dm.test_dataset.data = test slice of self.all_df
+    dm.train_dataset.data = self.all_df.loc[:train_size-1]
+    dm.dev_dataset.data = self.all_df.loc[train_size:(train_size+dev_size-1)]
+    dm.test_dataset.data = self.all_df.loc[(train_size+dev_size):]
     # # ====================================
-
+    print(self.all_df)
     # start from scratch
     system = SentimentClassifierSystem(self.config)
     trainer = Trainer(

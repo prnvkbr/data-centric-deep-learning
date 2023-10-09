@@ -162,7 +162,7 @@ class MNISTDirectionalityTest(BaseTest):
       # 
       # Pseudocode:
       # --
-      # batch_metric = ...
+      batch_metric = (torch.sum(preds_raw == preds_transformed)/len(preds_transformed))
       # 
       # Type:
       # --
